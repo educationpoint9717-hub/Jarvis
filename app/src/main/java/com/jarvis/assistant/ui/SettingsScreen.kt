@@ -30,11 +30,9 @@ fun SettingsScreen(refresh: Int, onBack: () -> Unit, onGrantRuntime: () -> Unit)
     val ctx = LocalContext.current
     val prefs = remember { Prefs(ctx) }
     var gemini by remember { mutableStateOf(prefs.geminiKey) }
-    var pico by remember { mutableStateOf(prefs.porcupineKey) }
     var model by remember { mutableStateOf(prefs.model) }
     var lang by remember { mutableStateOf(prefs.language) }
     var tts by remember { mutableStateOf(prefs.ttsLocale) }
-    var sens by remember { mutableFloatStateOf(prefs.sensitivity) }
     var pitch by remember { mutableFloatStateOf(prefs.pitch) }
     var cc by remember { mutableStateOf(prefs.countryCode) }
 
@@ -48,7 +46,6 @@ fun SettingsScreen(refresh: Int, onBack: () -> Unit, onGrantRuntime: () -> Unit)
             TextButton(onBack) { Text("Back") }
         }
         Field("Gemini API key", gemini, true) { gemini = it }
-        Field("Porcupine AccessKey", pico, true) { pico = it }
         Field("Gemini model", model, false) { model = it }
         Field("Default country code (WhatsApp)", cc, false) { cc = it }
 
@@ -57,14 +54,12 @@ fun SettingsScreen(refresh: Int, onBack: () -> Unit, onGrantRuntime: () -> Unit)
         Text("Voice accent (English replies)", color = Color.White)
         Chips(listOf("en-IN" to "Indian", "en-GB" to "British", "en-US" to "American"), tts) { tts = it }
 
-        Text("Wake word sensitivity: %.2f".format(sens), color = Color.White)
-        Slider(sens, { sens = it }, valueRange = 0.1f..0.95f)
         Text("Voice depth (pitch): %.2f  (lower = deeper)".format(pitch), color = Color.White)
         Slider(pitch, { pitch = it }, valueRange = 0.3f..1.2f)
 
         Button(onClick = {
-            prefs.geminiKey = gemini; prefs.porcupineKey = pico; prefs.model = model.ifBlank { "gemini-flash-latest" }
-            prefs.language = lang; prefs.ttsLocale = tts; prefs.sensitivity = sens; prefs.pitch = pitch; prefs.countryCode = cc
+            prefs.geminiKey = gemini; prefs.model = model.ifBlank { "gemini-flash-latest" }
+            prefs.language = lang; prefs.ttsLocale = tts; prefs.pitch = pitch; prefs.countryCode = cc
             JarvisService.send(ctx, JarvisService.ACTION_RELOAD)
             onBack()
         }, Modifier.fillMaxWidth()) { Text("SAVE") }

@@ -46,8 +46,9 @@ dependencies {
     implementation("androidx.compose.material3:material3")
     implementation("androidx.compose.material:material-icons-core")
 
-    // Wake word (Picovoice Porcupine)
-    implementation("ai.picovoice:porcupine-android:3.0.3")
+    // Wake word (Vosk offline recognizer, free, no key)
+    implementation("com.alphacephei:vosk-android:0.3.47")
+    implementation("net.java.dev.jna:jna:5.13.0@aar")
 
     // Gemini REST calls + coroutines
     implementation("com.squareup.okhttp3:okhttp:4.12.0")

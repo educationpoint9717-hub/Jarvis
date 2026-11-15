@@ -1,1 +1,2 @@
--keep class ai.picovoice.** { *; }
+-keep class com.sun.jna.** { *; }
+-keep class org.vosk.** { *; }

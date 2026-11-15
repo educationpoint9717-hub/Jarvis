@@ -96,15 +96,23 @@ class JarvisService : Service() {
 
     // ---------- wake word ----------
     private fun startWake() {
-        try {
-            wake.start(prefs)
-            JarvisBus.error.value = null
-            JarvisBus.state.value = JState.SLEEPING
-            update("Sleeping. Say “Jarvis”")
-        } catch (e: Exception) {
-            JarvisBus.error.value = e.message ?: "Wake word failed"
-            JarvisBus.state.value = JState.OFFLINE
-            update("Wake word error")
+        scope.launch {
+            try {
+                JarvisBus.state.value = JState.OFFLINE
+                if (!wake.hasModelFiles) {
+                    JarvisBus.error.value = "Downloading wake-word model (~40 MB). Keep internet on, please wait…"
+                    update("Downloading wake-word model…")
+                }
+                wake.prepare()
+                wake.resume()
+                JarvisBus.error.value = null
+                JarvisBus.state.value = JState.SLEEPING
+                update("Sleeping. Say “Jarvis”")
+            } catch (e: Exception) {
+                JarvisBus.error.value = "Wake word error: ${e.message}"
+                JarvisBus.state.value = JState.OFFLINE
+                update("Wake word error")
+            }
         }
     }
 

@@ -18,6 +18,9 @@ class GeminiClient(private val prefs: Prefs) {
         .readTimeout(60, TimeUnit.SECONDS)
         .build()
 
+    // Low "thinking" = much faster replies. Auto-disabled if the chosen model rejects it.
+    @Volatile private var useThinking = true
+
     private suspend fun post(body: JSONObject): JSONObject = withContext(Dispatchers.IO) {
         require(prefs.geminiKey.isNotBlank()) { "Set your Gemini API key in Settings" }
         val req = Request.Builder()
@@ -62,8 +65,16 @@ class GeminiClient(private val prefs: Prefs) {
                 .put("systemInstruction", sys(systemPrompt))
                 .put("contents", JSONArray(contents))
                 .put("tools", JSONArray().put(JSONObject().put("functionDeclarations", Tools.declarations())))
-                .put("generationConfig", JSONObject().put("temperature", 0.7))
-            val resp = post(req)
+                .put("generationConfig", genConfig())
+            val resp = try {
+                post(req)
+            } catch (e: IllegalStateException) {
+                if (useThinking && e.message?.contains("Gemini 400") == true) {
+                    useThinking = false
+                    req.put("generationConfig", genConfig())
+                    post(req)
+                } else throw e
+            }
             val content = resp.optJSONArray("candidates")?.optJSONObject(0)?.optJSONObject("content")
                 ?: return "I have nothing to add, sir."
             contents.add(content)
@@ -82,6 +93,12 @@ class GeminiClient(private val prefs: Prefs) {
             contents.add(JSONObject().put("role", "user").put("parts", results))
         }
         return "That took too many steps, sir."
+    }
+
+    private fun genConfig(): JSONObject {
+        val g = JSONObject().put("temperature", 0.7)
+        if (useThinking) g.put("thinkingConfig", JSONObject().put("thinkingLevel", "low"))
+        return g
     }
 
     /** Google Search grounded answer (separate call, works with every model). */
